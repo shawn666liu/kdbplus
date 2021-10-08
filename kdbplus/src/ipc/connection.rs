@@ -146,6 +146,7 @@ pub enum ConnectionMethod{
   TCP = 0,
   TLS = 1,
   /// Unix domanin socket.
+  #[cfg(unix)]
   UDS = 2
 }
 
@@ -402,6 +403,7 @@ impl QStream{
         let stream=connect_tls(host, port, credential).await?;
         Ok(QStream::new(Box::new(stream), ConnectionMethod::TLS, false, false))
       },
+      #[cfg(unix)]
       ConnectionMethod::UDS => {
         let stream=connect_uds(port, credential).await?;
         Ok(QStream::new(Box::new(stream), ConnectionMethod::UDS, false, true))
@@ -501,6 +503,7 @@ impl QStream{
         qstream.send_async_message(&".kdbplus.close_tls_connection_:{[] hclose .z.w;}").await?;
         Ok(qstream)
       }
+      #[cfg(unix)]
       ConnectionMethod::UDS => {
         // uild a sockt file path.
         let uds_path=create_sockfile_path(port)?;
@@ -583,6 +586,7 @@ impl QStream{
     match self.method{
       ConnectionMethod::TCP => "TCP",
       ConnectionMethod::TLS => "TLS",
+      #[cfg(unix)]
       ConnectionMethod::UDS => "UDS"
     }
   }
@@ -683,6 +687,7 @@ impl QStreamInner for TlsStream<TcpStream>{
 }
 
 #[async_trait]
+#[cfg(unix)]
 impl QStreamInner for UnixStream{
   /// Close a handle to a q process which is connected with Unix Domain Socket.
   ///  Socket file is removed.
